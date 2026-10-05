@@ -173,10 +173,11 @@
     point.className = 'point';
     if (!m.dernier_scan) { $('texte-scan').textContent = 'Aucun scan pour le moment'; point.classList.add('retard'); return; }
     const age = (Date.now() - new Date(m.dernier_scan).getTime()) / 60000;
-    let t = 'Dernier scan ' + depuis(m.dernier_scan);
+    const veilleMail = Number(m.sources_actives) === 0;
+    let t = (veilleMail ? 'Veille par alertes e-mail · dernier contrôle ' : 'Dernier scan ') + depuis(m.dernier_scan);
     if (age > freq * 3) { point.classList.add('panne'); t += ' · le moteur semble arrêté'; }
     else if (age > freq * 1.5) { point.classList.add('retard'); t += ' · en retard'; }
-    else t += ' · prochain dans ' + Math.max(1, Math.round(freq - age)) + ' min';
+    else if (!veilleMail) t += ' · prochain dans ' + Math.max(1, Math.round(freq - age)) + ' min';
     $('texte-scan').textContent = t;
   }
 

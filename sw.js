@@ -1,6 +1,6 @@
 // Service worker : coquille de l'appli en cache, données toujours demandées au serveur.
 // À CHAQUE MISE EN LIGNE : changer VERSION, sinon les téléphones gardent l'ancienne version.
-const VERSION = 'v1.1.0';
+const VERSION = 'v1.2.0';
 const CACHE = 'chasseur-' + VERSION;
 const COQUILLE = ['./', 'index.html', 'app.css', 'app.js', 'config.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/apple-touch-icon.png'];
 
