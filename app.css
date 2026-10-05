@@ -43,7 +43,7 @@ main { padding: 0 16px; max-width: 640px; margin: 0 auto; }
 .photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .photo .repli { position: absolute; inset: 0; margin: auto; width: 40px; height: 40px; color: #fff; opacity: .7; }
 .photo .badges { position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
-.photo .src { position: absolute; top: 12px; right: 12px; }
+.photo .src { position: absolute; bottom: 12px; right: 12px; }
 .badge { font-size: 11px; font-weight: 700; padding: 5px 9px; border-radius: 6px; background: #fff; color: var(--encre); }
 .badge.nouveau { background: var(--encre); color: #fff; letter-spacing: .08em; text-transform: uppercase; }
 .badge.baisse { background: var(--bon); color: #fff; }

@@ -1,7 +1,7 @@
 /* Chasseur Vieux-Lille : appli (aucun secret ici, le jeton d'accès est propre à chaque utilisateur). */
 (() => {
   'use strict';
-  const APP_VERSION = '1.4.0'; // à garder égale à VERSION dans sw.js et VERSION_SERVEUR dans n8n/build.js
+  const APP_VERSION = '1.5.0'; // = VERSION dans sw.js ; même 1.x que VERSION_SERVEUR (n8n/build.js), le dernier chiffre ne concerne que l'appli
   const CONFIG = window.CHASSEUR_CONFIG || {};
   const API = String(CONFIG.api || '').replace(/\/$/, '');
   const K = { jeton: 'chasseur.jeton', cache: 'chasseur.cache', filtres: 'chasseur.filtres' };
@@ -42,6 +42,7 @@
     coeur: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/>',
     croix: '<path d="M6 6l12 12M18 6L6 18"/>',
     retour: '<path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+    copier: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
     lien: '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/>',
     maison: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   };
@@ -137,6 +138,18 @@
       montrerBandeau("L'action n'a pas pu être enregistrée. Réessaie.");
     }
   }
+  // Depuis l'appli installée, l'iPhone ouvre les liens dans une fenêtre Safari réduite où certains sites
+  // (bannière cookies SeLoger) restent bloqués : on permet de copier le lien pour le coller dans Safari.
+  async function copierLien(url) {
+    let ok = false;
+    try { await navigator.clipboard.writeText(url); ok = true; } catch (e) {
+      const t = h('textarea', { readonly: true, style: 'position:fixed;top:-100px;opacity:0' }, url);
+      document.body.append(t); t.select(); t.setSelectionRange(0, url.length);
+      try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+      t.remove();
+    }
+    montrerBandeau(ok ? 'Lien copié : colle-le dans Safari.' : 'Copie impossible : ouvre l\'annonce puis touche la boussole pour Safari.');
+  }
   function montrerBandeau(t) {
     const b = $('bandeau'); b.textContent = t; b.hidden = false; b.dataset.temp = '1';
     setTimeout(() => { delete b.dataset.temp; b.hidden = !horsLigne; if (horsLigne) b.textContent = horsLigne; }, 4000);
@@ -146,7 +159,6 @@
   const FILTRES = [
     { id: 'non_vues', label: 'Non vues', test: (a) => !a.vue },
     { id: 'jour', label: "Aujourd'hui", test: (a) => new Date(a.date_tri).getTime() >= debutJour() },
-    { id: 'score', label: () => 'Score ≥ ' + param('seuil_alerte', 70), test: (a) => a.score >= param('seuil_alerte', 70) },
     { id: 'deux', label: '2 chambres', test: (a) => a.chambres === 2 },
   ];
 
@@ -186,7 +198,8 @@
     const toutes = donnees.annonces || [];
     if (onglet === 'favoris') return toutes.filter((a) => a.favori);
     if (onglet === 'ecartees') return toutes.filter((a) => a.ecartee);
-    let l = toutes.filter((a) => !a.ecartee);
+    // Le score minimum réglé s'applique aussi à l'affichage (les favoris restent toujours visibles).
+    let l = toutes.filter((a) => !a.ecartee && a.score >= param('seuil_alerte', 70));
     for (const f of FILTRES) if (filtres.has(f.id)) l = l.filter(f.test);
     return l;
   }
@@ -199,13 +212,13 @@
     }, typeof f.label === 'function' ? f.label() : f.label)));
     const liste = annoncesOnglet();
     const actives = (donnees.annonces || []).filter((a) => !a.ecartee);
-    const duJour = actives.filter((a) => new Date(a.date_tri).getTime() >= debutJour()).length;
+    const duJour = actives.filter((a) => a.score >= param('seuil_alerte', 70)).filter((a) => new Date(a.date_tri).getTime() >= debutJour()).length;
     const c = $('compteur');
     c.replaceChildren();
-    if (onglet === 'annonces') c.append(h('strong', null, liste.length + ' annonce' + (liste.length > 1 ? 's' : '')), ' · ' + duJour + " aujourd'hui · tri : plus récentes");
+    if (onglet === 'annonces') c.append(h('strong', null, liste.length + ' annonce' + (liste.length > 1 ? 's' : '')), ' · score ≥ ' + param('seuil_alerte', 70) + ' · ' + duJour + " aujourd'hui · tri : plus récentes");
     else c.append(h('strong', null, liste.length + (onglet === 'favoris' ? ' favori' : ' écartée') + (liste.length > 1 ? 's' : '')));
     const vide = {
-      annonces: filtres.size ? 'Aucune annonce avec ces filtres.' : 'Aucune annonce pour le moment. Le moteur scanne en continu, les nouveautés apparaîtront ici.',
+      annonces: filtres.size ? 'Aucune annonce avec ces filtres.' : 'Aucune annonce au-dessus du score minimum pour le moment. Le moteur scanne en continu, les nouveautés apparaîtront ici.',
       favoris: 'Touche le cœur sur une annonce pour la retrouver ici.',
       ecartees: 'Les annonces écartées apparaissent ici, tu peux les rétablir.',
     }[onglet];
@@ -264,11 +277,13 @@
           h('div', { class: 'gauche' },
             btn('vue', 'oeil', a.vue ? 'Marquer non vue' : 'Marquer vue'),
             btn('favori', 'coeur', a.favori ? 'Retirer des favoris' : 'Ajouter aux favoris', 'coeur'),
-            onglet === 'ecartees' ? btn('ecartee', 'retour', 'Rétablir') : btn('ecartee', 'croix', 'Écarter')),
+            onglet === 'ecartees' ? btn('ecartee', 'retour', 'Rétablir') : btn('ecartee', 'croix', 'Écarter'),
+            h('button', { class: 'icone', 'aria-label': 'Copier le lien', onclick: () => copierLien(a.url) }, svg(ICONES.copier))),
           h('a', { class: 'voir', href: a.url, target: '_blank', rel: 'noopener noreferrer', onclick: () => { if (!a.vue) changerEtat(a, 'vue'); } },
             "Voir l'annonce", svg(ICONES.lien)))));
   }
 
+  const LIBELLES = { seuil_alerte: 'Score minimum (annonces affichées et alertes Telegram)' };
   const CHOIX = {
     meuble: [[0, 'Indifférent'], [1, 'Meublé'], [2, 'Vide']],
     dpe_max: [[1, 'A'], [2, 'B'], [3, 'C'], [4, 'D'], [5, 'E'], [6, 'F'], [7, 'G (tous)']],
@@ -291,7 +306,7 @@
     $('nom-utilisateur').textContent = donnees.utilisateur || '';
     const vs = m.version_serveur;
     $('versions').textContent = 'Appli v' + APP_VERSION + ' · Serveur ' + (vs ? 'v' + vs : 'ancienne version (à mettre à jour)')
-      + (vs && vs !== APP_VERSION ? ' · versions différentes, mets à jour le serveur ou l\'appli' : '');
+      + (vs && vs.split('.').slice(0, 2).join('.') !== APP_VERSION.split('.').slice(0, 2).join('.') ? ' · versions différentes, mets à jour le serveur ou l\'appli' : '');
     const form = $('form-reglages');
     if (!form.contains(document.activeElement)) {
       form.replaceChildren(...(donnees.parametres || []).map((p) => {
@@ -300,7 +315,7 @@
         const champ = choix
           ? h('select', { id, name: p.cle }, choix.map(([v, t]) => h('option', { value: v, selected: Number(p.valeur) === v }, t)))
           : h('input', { id, name: p.cle, type: 'number', inputmode: 'decimal', min: p.min, max: p.max, step: /_km$/.test(p.cle) ? '0.1' : '1', value: p.valeur, required: true });
-        return h('div', { class: 'ligne' }, h('label', { for: id }, p.libelle), champ);
+        return h('div', { class: 'ligne' }, h('label', { for: id }, LIBELLES[p.cle] || p.libelle), champ);
       }), h('div', { class: 'valider' }, h('button', { type: 'submit', class: 'bouton-plein' }, 'Enregistrer les réglages')));
     }
   }
