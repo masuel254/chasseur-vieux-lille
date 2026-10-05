@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Chasseur Vieux-Lille</title>
+  <meta name="theme-color" content="#F5F3EF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Vieux-Lille">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div id="app">
+    <section id="ecran-code" class="ecran-code" hidden>
+      <h1>Vieux-Lille</h1>
+      <p>Saisis le code d'accès reçu avec le lien de l'appli.</p>
+      <form id="form-code">
+        <label for="champ-code">Code d'accès</label>
+        <input id="champ-code" name="code" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+        <button type="submit" class="bouton-plein">Entrer</button>
+        <p id="erreur-code" class="erreur" role="alert"></p>
+      </form>
+    </section>
+
+    <div id="ecran-principal" hidden>
+      <header class="entete">
+        <div class="entete-haut">
+          <div>
+            <span class="surtitre" id="surtitre">Location</span>
+            <h1>Vieux-Lille</h1>
+          </div>
+          <button id="btn-actualiser" class="bouton-rond" aria-label="Actualiser">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></svg>
+          </button>
+        </div>
+        <p class="etat-scan"><span id="point-scan" class="point"></span><span id="texte-scan">Chargement…</span></p>
+        <p id="bandeau" class="bandeau" hidden></p>
+        <div id="filtres" class="filtres" role="group" aria-label="Filtres"></div>
+      </header>
+
+      <main>
+        <section id="vue-annonces" data-vue="annonces">
+          <p class="compteur" id="compteur"></p>
+          <div id="liste" class="liste"></div>
+        </section>
+        <section id="vue-moteur" data-vue="moteur" hidden>
+          <div class="kpis" id="kpis"></div>
+          <h2>Sources</h2>
+          <div class="carte-liste" id="sources"></div>
+          <h2>Réglages de la recherche</h2>
+          <p class="aide">Réglages partagés : ils s'appliquent aussi à l'autre utilisateur, dès le prochain scan.</p>
+          <form id="form-reglages" class="carte-liste reglages"></form>
+          <p id="msg-reglages" class="aide" role="status"></p>
+          <p class="aide pied">Connecté en tant que <strong id="nom-utilisateur"></strong> · <button id="btn-deconnexion" class="lien">changer de code</button></p>
+        </section>
+      </main>
+
+      <nav class="onglets" aria-label="Navigation">
+        <button data-onglet="annonces" aria-current="page">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+          Annonces</button>
+        <button data-onglet="favoris">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+          Favoris</button>
+        <button data-onglet="ecartees">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          Écartées</button>
+        <button data-onglet="moteur">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+          Moteur</button>
+      </nav>
+    </div>
+  </div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
