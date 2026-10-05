@@ -1,7 +1,7 @@
 /* Chasseur Vieux-Lille : appli (aucun secret ici, le jeton d'accès est propre à chaque utilisateur). */
 (() => {
   'use strict';
-  const APP_VERSION = '1.3.0'; // à garder égale à VERSION dans sw.js et VERSION_SERVEUR dans n8n/build.js
+  const APP_VERSION = '1.4.0'; // à garder égale à VERSION dans sw.js et VERSION_SERVEUR dans n8n/build.js
   const CONFIG = window.CHASSEUR_CONFIG || {};
   const API = String(CONFIG.api || '').replace(/\/$/, '');
   const K = { jeton: 'chasseur.jeton', cache: 'chasseur.cache', filtres: 'chasseur.filtres' };
