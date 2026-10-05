@@ -1,7 +1,7 @@
 /* Chasseur Vieux-Lille : appli (aucun secret ici, le jeton d'accès est propre à chaque utilisateur). */
 (() => {
   'use strict';
-  const APP_VERSION = '1.5.2'; // = VERSION dans sw.js ; même 1.x que VERSION_SERVEUR (n8n/build.js), le dernier chiffre ne concerne que l'appli
+  const APP_VERSION = '1.6.0'; // = VERSION dans sw.js ; même 1.x que VERSION_SERVEUR (n8n/build.js), le dernier chiffre ne concerne que l'appli
   const CONFIG = window.CHASSEUR_CONFIG || {};
   const API = String(CONFIG.api || '').replace(/\/$/, '');
   const K = { jeton: 'chasseur.jeton', cache: 'chasseur.cache', filtres: 'chasseur.filtres' };
@@ -294,15 +294,23 @@
     const kpi = (n, t) => h('div', { class: 'kpi' }, h('b', null, String(n ?? 0)), h('span', null, t));
     $('kpis').replaceChildren(kpi(m.scans_jour, "scans aujourd'hui"), kpi(m.retenues_jour, 'nouvelles retenues'),
       kpi(m.doublons_jour, 'doublons filtrés'), kpi(m.baisses_jour, 'baisses de prix'), kpi(m.rejets_jour, 'hors critères'), kpi(m.liens_jour, 'liens analysés'));
-    $('sources').replaceChildren(...(m.sources || []).map((s) => {
-      const ok = s.actif && s.statut === 'ok';
-      const coul = !s.actif ? '#9AA0A6' : ok ? '#2F6B4F' : /erreur/.test(s.statut || '') ? '#7A2E22' : '#B07D16';
+    // Sources « pages » : seules les actives sont affichées. Puis une ligne par portail suivi par alerte e-mail.
+    const lignesPages = (m.sources || []).filter((s) => s.actif).map((s) => {
+      const ok = s.statut === 'ok';
+      const coul = ok ? '#2F6B4F' : /erreur/.test(s.statut || '') ? '#7A2E22' : '#B07D16';
       const pt = h('span', { class: 'point' }); pt.style.background = coul;
       return h('div', { class: 'ligne' }, pt,
-        h('div', { class: 'txt' }, h('b', null, s.nom), h('span', null, !s.actif ? 'désactivée' : (s.statut || 'pas encore collectée') + (s.nb_liens !== null && s.nb_liens !== undefined ? ' · ' + s.nb_liens + ' liens' : ''))),
+        h('div', { class: 'txt' }, h('b', null, s.nom), h('span', null, 'Page du site · ' + (s.statut || 'pas encore collectée') + (s.nb_liens !== null && s.nb_liens !== undefined ? ' · ' + s.nb_liens + ' liens' : ''))),
         h('span', { class: 'droite' }, s.derniere_collecte ? depuis(s.derniere_collecte) : '—'));
-    }), h('div', { class: 'ligne' }, h('span', { class: 'point' }),
-      h('div', { class: 'txt' }, h('b', null, 'Alertes e-mail des portails'), h('span', null, 'Traitées dès réception'))));
+    });
+    const lignesMail = m.portails ? m.portails.map((p) => {
+      const pt = h('span', { class: 'point' }); pt.style.background = p.derniere ? '#2F6B4F' : '#9AA0A6';
+      return h('div', { class: 'ligne' }, pt,
+        h('div', { class: 'txt' }, h('b', null, p.nom), h('span', null, 'Alerte e-mail · ' + (p.derniere ? p.nb_jour + " annonce" + (p.nb_jour > 1 ? 's' : '') + " aujourd'hui" : 'aucune annonce reçue pour l\'instant'))),
+        h('span', { class: 'droite' }, p.derniere ? depuis(p.derniere) : '—'));
+    }) : [h('div', { class: 'ligne' }, h('span', { class: 'point' }),
+      h('div', { class: 'txt' }, h('b', null, 'Alertes e-mail des portails'), h('span', null, 'Traitées dès réception')))];
+    $('sources').replaceChildren(...lignesPages, ...lignesMail);
     $('nom-utilisateur').textContent = donnees.utilisateur || '';
     const vs = m.version_serveur;
     $('versions').textContent = 'Appli v' + APP_VERSION + ' · Serveur ' + (vs ? 'v' + vs : 'ancienne version (à mettre à jour)')
