@@ -1,6 +1,7 @@
 /* Chasseur Vieux-Lille : appli (aucun secret ici, le jeton d'accès est propre à chaque utilisateur). */
 (() => {
   'use strict';
+  const APP_VERSION = '1.3.0'; // à garder égale à VERSION dans sw.js et VERSION_SERVEUR dans n8n/build.js
   const CONFIG = window.CHASSEUR_CONFIG || {};
   const API = String(CONFIG.api || '').replace(/\/$/, '');
   const K = { jeton: 'chasseur.jeton', cache: 'chasseur.cache', filtres: 'chasseur.filtres' };
@@ -288,6 +289,9 @@
     }), h('div', { class: 'ligne' }, h('span', { class: 'point' }),
       h('div', { class: 'txt' }, h('b', null, 'Alertes e-mail des portails'), h('span', null, 'Traitées dès réception'))));
     $('nom-utilisateur').textContent = donnees.utilisateur || '';
+    const vs = m.version_serveur;
+    $('versions').textContent = 'Appli v' + APP_VERSION + ' · Serveur ' + (vs ? 'v' + vs : 'ancienne version (à mettre à jour)')
+      + (vs && vs !== APP_VERSION ? ' · versions différentes, mets à jour le serveur ou l\'appli' : '');
     const form = $('form-reglages');
     if (!form.contains(document.activeElement)) {
       form.replaceChildren(...(donnees.parametres || []).map((p) => {
@@ -326,7 +330,21 @@
   setInterval(() => { if (document.visibilityState === 'visible') charger(); }, 2 * 60 * 1000);
   setInterval(() => { if (donnees && document.visibilityState === 'visible' && onglet !== 'moteur') rendre(); }, 60 * 1000);
 
-  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});
+  // Mise à jour automatique : quand une nouvelle version est publiée sur GitHub, le service worker
+  // la récupère, prend la main, et l'appli se recharge une fois d'elle-même.
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    const dejaControlee = !!navigator.serviceWorker.controller;
+    let recharge = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!dejaControlee || recharge) return;
+      recharge = true;
+      location.reload();
+    });
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+      setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000);
+    }).catch(() => {});
+  }
 
   lireJetonUrl();
   if (!API) { ecranCode("Appli mal configurée : l'adresse du serveur manque dans config.js."); return; }
